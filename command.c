@@ -33,6 +33,7 @@ BOOL get_service_handler(DWORD desiredAccess, SC_HANDLE* hSCManager, SC_HANDLE* 
 BOOL check_status(SC_HANDLE hService, DWORD status, BOOL* result) {
     SERVICE_STATUS serviceStatus;
     if (!QueryServiceStatus(hService, &serviceStatus)) {
+        last_winapi_error = GetLastError();
         return FALSE;
     }
     *result = (serviceStatus.dwCurrentState == status);
