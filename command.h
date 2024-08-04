@@ -17,4 +17,5 @@ typedef struct Command {
 extern Command command_registry[];
 size_t get_command_registry_size();
 
+int service_start();
 int service_stop();
