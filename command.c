@@ -26,6 +26,15 @@ SC_HANDLE get_service_handler(DWORD desiredAccess) {
     return hService;
 }
 
+BOOL check_status(SC_HANDLE hService, DWORD status, BOOL* result) {
+    SERVICE_STATUS serviceStatus;
+    if (!QueryServiceStatus(hService, &serviceStatus)) {
+        return FALSE;
+    }
+    *result = (serviceStatus.dwCurrentState == status);
+    return TRUE;
+}
+
 void wait_status(SC_HANDLE hService, DWORD status, SERVICE_STATUS* outStatus) {
     while (QueryServiceStatus(hService, outStatus)) {
         if (outStatus->dwCurrentState == status) {
@@ -45,9 +54,9 @@ int service_stop() {
         return last_error;
 
     SERVICE_STATUS serviceStatus;
-    if (QueryServiceStatus(hService, &serviceStatus)) {
-        if (serviceStatus.dwCurrentState == SERVICE_STOPPED)
-            return RESULT_OK;
+    BOOL isStopped;
+    if (check_status(hService, SERVICE_STOPPED, &isStopped) && isStopped) {
+        return RESULT_OK;
     }
 
     if (!ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus)) {
