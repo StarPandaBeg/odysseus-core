@@ -12,5 +12,6 @@ void service_cleanup(SC_HANDLE hSCManager, SC_HANDLE hService);
 int service_get_last_error();
 DWORD service_get_last_api_error();
 
+BOOL service_status(SC_HANDLE hService, SERVICE_STATUS* status);
 BOOL service_start(SC_HANDLE hService);
 BOOL service_stop(SC_HANDLE hService);

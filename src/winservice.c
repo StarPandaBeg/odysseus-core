@@ -5,8 +5,7 @@ DWORD last_winapi_error;
 
 BOOL check_status(SC_HANDLE hService, DWORD status, BOOL* result) {
     SERVICE_STATUS serviceStatus;
-    if (!QueryServiceStatus(hService, &serviceStatus)) {
-        last_winapi_error = GetLastError();
+    if (!service_status(hService, &serviceStatus)) {
         return FALSE;
     }
     *result = (serviceStatus.dwCurrentState == status);
@@ -52,6 +51,14 @@ int service_get_last_error() {
 
 DWORD service_get_last_api_error() {
     return last_winapi_error;
+}
+
+BOOL service_status(SC_HANDLE hService, SERVICE_STATUS* status) {
+    if (!QueryServiceStatus(hService, status)) {
+        last_winapi_error = GetLastError();
+        return FALSE;
+    }
+    return TRUE;
 }
 
 BOOL service_start(SC_HANDLE hService) {
