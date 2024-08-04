@@ -14,3 +14,4 @@ size_t get_command_registry_size();
 
 int command_service_start();
 int command_service_stop();
+int command_service_restart();
