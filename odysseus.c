@@ -11,11 +11,11 @@
 
 #include "command.h"
 
-int execute_command(char buffer[BUFFER_SIZE]) {
+int execute_command(char buffer[BUFFER_SIZE], int* exit_status) {
     for (size_t i = 0; i < COMMAND_REGISTRY_SIZE; i++) {
         if (strcmp(buffer, command_registry[i].command) != 0)
             continue;
-        command_registry[i].func();
+        *exit_status = command_registry[i].func();
         return 1;
     }
     return 0;
@@ -27,7 +27,9 @@ int main() {
         return ERR_NO_INPUT;
     buffer[strcspn(buffer, "\r\n")] = 0;
 
-    if (!execute_command(buffer))
+    int exit_status;
+    if (!execute_command(buffer, &exit_status))
         return ERR_INVALID_COMMAND;
+    printf("%d", exit_status);
     return 0;
 }
