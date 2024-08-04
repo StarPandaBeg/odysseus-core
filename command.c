@@ -6,24 +6,28 @@
 #include "odysseus.h"
 
 int last_error;
+DWORD last_winapi_error;
 
 Command command_registry[] = {
     {"service:stop", service_stop}};
 
-SC_HANDLE get_service_handler(DWORD desiredAccess) {
-    SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    if (hSCManager == NULL) {
+BOOL get_service_handler(DWORD desiredAccess, SC_HANDLE* hSCManager, SC_HANDLE* hService) {
+    *hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (*hSCManager == NULL) {
         last_error = ERR_SC_MNG_FAIL;
-        return NULL;
+        last_winapi_error = GetLastError();
+        return FALSE;
     }
 
-    SC_HANDLE hService = OpenService(hSCManager, SERVICE_NAME, desiredAccess);
-    if (hService == NULL) {
-        CloseServiceHandle(hSCManager);
+    *hService = OpenService(*hSCManager, SERVICE_NAME, desiredAccess);
+    if (*hService == NULL) {
         last_error = ERR_SC_FAIL;
-        return NULL;
+        last_winapi_error = GetLastError();
+        CloseServiceHandle(*hSCManager);
+        return FALSE;
     }
-    return hService;
+
+    return TRUE;
 }
 
 BOOL check_status(SC_HANDLE hService, DWORD status, BOOL* result) {
@@ -49,24 +53,34 @@ size_t get_command_registry_size() {
 }
 
 int service_stop() {
-    SC_HANDLE hService = get_service_handler(SERVICE_STOP | SERVICE_QUERY_STATUS);
-    if (hService == NULL)
-        return last_error;
+    SC_HANDLE hSCManager;
+    SC_HANDLE hService;
+    int return_code = RESULT_OK;
+
+    if (!get_service_handler(SERVICE_STOP | SERVICE_QUERY_STATUS, &hSCManager, &hService)) {
+        return_code = last_error;
+        goto end;
+    }
 
     SERVICE_STATUS serviceStatus;
     BOOL isStopped;
     if (check_status(hService, SERVICE_STOPPED, &isStopped) && isStopped) {
-        return RESULT_OK;
+        goto end;
     }
 
     if (!ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus)) {
-        return ERR_SC_ACTION_FAIL;
+        return_code = ERR_SC_ACTION_FAIL;
+        goto end;
     }
 
     wait_status(hService, SERVICE_STOP_PENDING, &serviceStatus);
     if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
-        return ERR_SC_ACTION_FAIL;
+        return_code = ERR_SC_ACTION_FAIL;
+        goto end;
     }
 
-    return RESULT_OK;
+end:
+    CloseServiceHandle(hService);
+    CloseServiceHandle(hSCManager);
+    return return_code;
 }
