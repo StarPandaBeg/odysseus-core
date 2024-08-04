@@ -2,12 +2,12 @@
 
 #define COMMAND_REGISTRY_SIZE sizeof command_registry / sizeof *command_registry
 
-typedef struct {
+typedef struct Command {
     const char* command;
-    void (*func)();
+    int (*func)();
 } Command;
 
-void test();
+int service_stop();
 
 Command command_registry[] = {
-    {"test", test}};
+    {"service:stop", service_stop}};
