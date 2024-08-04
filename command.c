@@ -67,8 +67,13 @@ int service_start() {
 
     SERVICE_STATUS serviceStatus;
     BOOL isRunning;
-
     if (check_status(hService, SERVICE_RUNNING, &isRunning) && isRunning) {
+        goto end;
+    }
+
+    BOOL isStartPending;
+    if (check_status(hService, SERVICE_START_PENDING, &isStartPending) && isStartPending) {
+        wait_status(hService, SERVICE_START_PENDING, &serviceStatus);
         goto end;
     }
 
@@ -102,6 +107,12 @@ int service_stop() {
     SERVICE_STATUS serviceStatus;
     BOOL isStopped;
     if (check_status(hService, SERVICE_STOPPED, &isStopped) && isStopped) {
+        goto end;
+    }
+
+    BOOL isStopPending;
+    if (check_status(hService, SERVICE_STOP_PENDING, &isStopPending) && isStopPending) {
+        wait_status(hService, SERVICE_STOP_PENDING, &serviceStatus);
         goto end;
     }
 
