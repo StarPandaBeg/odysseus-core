@@ -5,11 +5,13 @@
 
 #include "odysseus.h"
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "command.h"
+#include "messaging.h"
 
 int execute_command(char buffer[BUFFER_SIZE], int* exit_status) {
     for (size_t i = 0; i < COMMAND_REGISTRY_SIZE; i++) {
@@ -22,14 +24,17 @@ int execute_command(char buffer[BUFFER_SIZE], int* exit_status) {
 }
 
 int main() {
-    char buffer[BUFFER_SIZE];
-    if (fgets(buffer, sizeof(buffer), stdin) == NULL)
+    _setmode(_fileno(stdin), O_BINARY);
+    _setmode(_fileno(stdout), O_BINARY);
+
+    uint32_t message_size = read_message_length();
+    if (!message_size)
         return ERR_NO_INPUT;
-    buffer[strcspn(buffer, "\r\n")] = 0;
+    char* message = read_message(message_size);
 
     int exit_status;
-    if (!execute_command(buffer, &exit_status))
+    if (!execute_command(message, &exit_status))
         return ERR_INVALID_COMMAND;
-    printf("%d", exit_status);
+    send_message("%d", exit_status);
     return 0;
 }
