@@ -1,6 +1,6 @@
 #include "winservice.h"
 
-int last_error;
+ServiceError last_error;
 DWORD last_winapi_error;
 
 BOOL check_status(SC_HANDLE hService, DWORD status, BOOL* result) {
@@ -45,7 +45,7 @@ void service_cleanup(SC_HANDLE hSCManager, SC_HANDLE hService) {
     CloseServiceHandle(hSCManager);
 }
 
-int service_get_last_error() {
+ServiceError service_get_last_error() {
     return last_error;
 }
 
