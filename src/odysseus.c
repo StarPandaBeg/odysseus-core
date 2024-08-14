@@ -17,7 +17,9 @@ int execute_command(char buffer[BUFFER_SIZE], int* exit_status) {
     for (size_t i = 0; i < COMMAND_REGISTRY_SIZE; i++) {
         if (strcmp(buffer, command_registry[i].command) != 0)
             continue;
-        *exit_status = command_registry[i].func();
+
+        CommandResult result = command_registry[i].func();
+        *exit_status = result.status;
         return 1;
     }
     return 0;
