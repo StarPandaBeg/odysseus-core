@@ -90,6 +90,7 @@ CommandResult command_service_status() {
     SC_HANDLE hService;
     SERVICE_STATUS serviceStatus;
     CommandResult result = COMMAND_RESULT_OK;
+    BOOL isOnline = FALSE;
 
     if (!service_get_handle(SERVICE_NAME, &hSCManager, &hService)) {
         goto fail;
@@ -97,6 +98,11 @@ CommandResult command_service_status() {
     if (!service_status(hService, &serviceStatus)) {
         goto fail;
     }
+
+    if (serviceStatus.dwCurrentState == SERVICE_RUNNING || serviceStatus.dwCurrentState == SERVICE_START_PENDING) {
+        isOnline = TRUE;
+    }
+    result.data = isOnline ? "1" : "0";
     goto end;
 
 fail:
