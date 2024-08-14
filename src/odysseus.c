@@ -13,13 +13,19 @@
 #include "command.h"
 #include "messaging.h"
 
-int execute_command(char buffer[BUFFER_SIZE], int* exit_status) {
+void send_result_message(CommandResult* result) {
+    if (result->data == NULL) {
+        send_message(result->status, "");
+        return;
+    }
+    send_message(result->status, "%s", result->data);
+}
+
+int execute_command(char buffer[BUFFER_SIZE], CommandResult* result) {
     for (size_t i = 0; i < COMMAND_REGISTRY_SIZE; i++) {
         if (strcmp(buffer, command_registry[i].command) != 0)
             continue;
-
-        CommandResult result = command_registry[i].func();
-        *exit_status = result.status;
+        *result = command_registry[i].func();
         return 1;
     }
     return 0;
@@ -34,9 +40,9 @@ int main() {
         return ERR_NO_INPUT;
     char* message = read_message(message_size);
 
-    int exit_status;
-    if (!execute_command(message, &exit_status))
+    CommandResult result;
+    if (!execute_command(message, &result))
         return ERR_INVALID_COMMAND;
-    send_message("%d", exit_status);
+    send_result_message(&result);
     return 0;
 }

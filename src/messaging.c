@@ -1,20 +1,20 @@
 #include "messaging.h"
 
-#define RESPONSE_FORMAT "{\"response\": \"%s\"}"
+#define RESPONSE_FORMAT "{\"response\": \"%s\", \"status\": \"%d\"}"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-char *to_json_response(char *message) {
-    int json_size = snprintf(NULL, 0, RESPONSE_FORMAT, message) + 1;
+char *to_json_response(int status, char *message) {
+    int json_size = snprintf(NULL, 0, RESPONSE_FORMAT, message, status) + 1;
     char *json_buffer = (char *)malloc((size_t)json_size);
     if (!json_buffer) {
         free(message);
         return NULL;
     }
-    snprintf(json_buffer, (size_t)json_size, RESPONSE_FORMAT, message);
+    snprintf(json_buffer, (size_t)json_size, RESPONSE_FORMAT, message, status);
     return json_buffer;
 }
 
@@ -38,7 +38,7 @@ char *read_message(uint32_t length) {
     return message;
 }
 
-int send_message(const char *format, ...) {
+int send_message(int status, const char *format, ...) {
     char *buffer = NULL;
     int buffer_size = 0;
     va_list args;
@@ -60,7 +60,7 @@ int send_message(const char *format, ...) {
     va_end(args);
 
     // Create JSON response
-    char *response = to_json_response(buffer);
+    char *response = to_json_response(status, buffer);
     uint32_t json_size = (uint32_t)strlen(response);
 
     // Write message to stdout preceded with an unsigned 32-bit message length
