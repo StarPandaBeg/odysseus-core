@@ -44,5 +44,7 @@ int main() {
     if (!execute_command(message, &result))
         return ERR_INVALID_COMMAND;
     send_result_message(&result);
+
+    free(result.data);
     return 0;
 }
