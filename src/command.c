@@ -1,5 +1,8 @@
 #include "command.h"
 
+#include <stdio.h>
+
+#include "base64.h"
 #include "odysseus.h"
 
 int return_code = 0;
@@ -9,6 +12,7 @@ Command command_registry[] = {
     {"service:stop", command_service_stop},
     {"service:restart", command_service_restart},
     {"service:status", command_service_status},
+    {"service:whitelist", command_read_whitelist},
 };
 
 size_t get_command_registry_size() {
@@ -110,5 +114,40 @@ fail:
     result.status = FALSE;
 end:
     service_cleanup(hSCManager, hService);
+    return result;
+}
+
+CommandResult command_read_whitelist() {
+    CommandResult result = COMMAND_RESULT_OK;
+    FILE* file = fopen(WHITELIST_PATH, "r");
+    if (file == NULL) {
+        return_code = ERR_FILE_FAIL;
+        goto fail;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t fileSize = (size_t)ftell(file);
+    rewind(file);
+
+    unsigned char* content = (unsigned char*)malloc((fileSize + 1) * sizeof(char));
+    if (content == NULL) {
+        return_code = ERR_FILE_ALLOC_FAIL;
+        goto fail;
+    }
+
+    size_t readSize = fread(content, sizeof(char), (size_t)fileSize, file);
+    content[readSize] = '\0';
+
+    size_t encodedSize;
+    char* encoded = base64_encode(content, readSize, &encodedSize);
+    result.data = encoded;
+
+    free(content);
+    goto end;
+
+fail:
+    result.status = FALSE;
+end:
+    fclose(file);
     return result;
 }
